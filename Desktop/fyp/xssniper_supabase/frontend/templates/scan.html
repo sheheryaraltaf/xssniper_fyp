@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% set active = "scan" %}
+{% block title %}New Scan{% endblock %}
+{% block page_title %}New Scan{% endblock %}
+{% block page_title_copy %}New Scan{% endblock %}
+
+{% block content %}
+<div class="scan-layout" class="scan-layout" style="display:grid;grid-template-columns:380px 1fr;gap:20px;align-items:start;">
+
+  <!-- ── Config Panel ── -->
+  <div style="display:flex;flex-direction:column;gap:14px;">
+
+    <!-- ML Toggle Card -->
+    <div class="ml-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div class="ml-card-title">🤖 ML Prefiltering</div>
+          <div class="ml-card-desc">Neural network payload optimization</div>
+        </div>
+        <div class="toggle" id="toggle-ml" data-for="h-ml"></div>
+        <input type="hidden" id="h-ml" value="false">
+      </div>
+    </div>
+
+    <!-- Target URL -->
+    <div class="card">
+      <div class="card-title">Target</div>
+      <div class="form-group">
+        <label class="form-label">Target URL *</label>
+        <input id="scan-url" class="form-input" type="url" placeholder="https://target.com/page?q=test" required>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">POST Data <span style="color:var(--tm)">(optional)</span></label>
+        <input id="scan-data" class="form-input" type="text" placeholder="param1=val1&param2=val2">
+      </div>
+    </div>
+
+    <!-- Options -->
+    <div class="card">
+      <div class="card-title">Options</div>
+      <div class="toggle-row" onclick="toggleOpt('toggle-crawl','h-crawl')">
+        <div><div class="toggle-label">Crawl Mode</div><div class="toggle-desc">Spider all pages on target</div></div>
+        <div class="toggle" id="toggle-crawl"></div>
+        <input type="hidden" id="h-crawl" value="false">
+      </div>
+      <div class="toggle-row" onclick="toggleOpt('toggle-json','h-json')">
+        <div><div class="toggle-label">JSON Mode</div><div class="toggle-desc">Target accepts JSON body</div></div>
+        <div class="toggle" id="toggle-json"></div>
+        <input type="hidden" id="h-json" value="false">
+      </div>
+      <div class="toggle-row" onclick="toggleOpt('toggle-fuzzer','h-fuzzer')">
+        <div><div class="toggle-label">Fuzzer</div><div class="toggle-desc">Extended fuzzing mode</div></div>
+        <div class="toggle" id="toggle-fuzzer"></div>
+        <input type="hidden" id="h-fuzzer" value="false">
+      </div>
+      <div class="toggle-row" onclick="toggleOpt('toggle-encode','h-encode')">
+        <div><div class="toggle-label">Encode Payloads</div><div class="toggle-desc">URL-encode all payloads</div></div>
+        <div class="toggle" id="toggle-encode"></div>
+        <input type="hidden" id="h-encode" value="false">
+      </div>
+      <div class="toggle-row" onclick="toggleOpt('toggle-path','h-path')" style="border-bottom:none">
+        <div><div class="toggle-label">Path Mode</div><div class="toggle-desc">Inject payloads in URL path</div></div>
+        <div class="toggle" id="toggle-path"></div>
+        <input type="hidden" id="h-path" value="false">
+      </div>
+    </div>
+
+    <!-- Advanced -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:0;" onclick="toggleAdvanced()" id="adv-header">
+        <div class="card-title" style="margin-bottom:0;">Advanced</div>
+        <span id="adv-arrow" style="color:var(--td);font-size:12px;transition:transform 0.2s;">▾</span>
+      </div>
+      <div id="advanced-panel" style="display:none;margin-top:16px;">
+        <div class="form-group">
+          <label class="form-label">Scan Level: <span id="level-val" style="color:var(--g);">2</span></label>
+          <input type="range" id="scan-level" min="1" max="3" value="2" oninput="document.getElementById('level-val').textContent=this.value">
+          <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px;color:var(--tm);margin-top:4px;">
+            <span>Basic</span><span>Standard</span><span>Deep</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Threads: <span id="threads-val" style="color:var(--g);">2</span></label>
+          <input type="range" id="scan-threads" min="1" max="10" value="2" oninput="document.getElementById('threads-val').textContent=this.value">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Timeout (s): <span id="timeout-val" style="color:var(--g);">5</span></label>
+          <input type="range" id="scan-timeout" min="1" max="30" value="5" oninput="document.getElementById('timeout-val').textContent=this.value">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Delay (s)</label>
+          <input id="scan-delay" class="form-input" type="number" min="0" max="10" step="0.5" value="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Custom Headers</label>
+          <input id="scan-headers" class="form-input" type="text" placeholder="Header: Value">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Proxy</label>
+          <input id="scan-proxy" class="form-input" type="text" placeholder="http://127.0.0.1:8888">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">URL List File</label>
+          <input id="scan-file" class="form-input" type="text" placeholder="/path/to/urls.txt">
+        </div>
+        <input type="hidden" id="h-skipdom" value="false">
+      </div>
+    </div>
+
+    <!-- Launch/Stop -->
+    <div style="display:flex;gap:10px;" class="scan-actions">
+      <button id="start-btn" class="btn btn-primary btn-lg" style="flex:1;font-family:var(--font-hd);letter-spacing:2px;" onclick="startScan()">
+        <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
+        LAUNCH
+      </button>
+      <button id="stop-btn" class="btn btn-danger btn-lg" style="flex:1;" onclick="stopScan()" disabled>
+        <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+        STOP
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ── Terminal ── -->
+  <div class="terminal scan-terminal" style="height:calc(100vh - 120px);min-height:600px;">
+    <div class="terminal-header">
+      <div class="t-dot" style="background:#ff5f57;"></div>
+      <div class="t-dot" style="background:#febc2e;"></div>
+      <div class="t-dot" style="background:#28c840;"></div>
+      <div class="terminal-title">xssniper — scan_output</div>
+      <div style="margin-left:auto;display:flex;gap:8px;">
+        <button onclick="clearTerminal()" class="btn btn-ghost btn-sm">Clear</button>
+      </div>
+    </div>
+    <div class="terminal-body" id="terminal-output" style="height:100%;">
+      <div class="terminal-ascii" style="color:var(--g);font-size:11px;line-height:1.4;margin-bottom:12px;white-space:pre;">
+██╗  ██╗███████╗███████╗███╗   ██╗██╗██████╗ ███████╗██████╗
+╚██╗██╔╝██╔════╝██╔════╝████╗  ██║██║██╔══██╗██╔════╝██╔══██╗
+ ╚███╔╝ ███████╗███████╗██╔██╗ ██║██║██████╔╝█████╗  ██████╔╝
+ ██╔██╗ ╚════██║╚════██║██║╚██╗██║██║██╔═══╝ ██╔══╝  ██╔══██╗
+██╔╝ ██╗███████║███████║██║ ╚████║██║██║     ███████╗██║  ██║
+╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═══╝╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝</div>
+      <div style="color:var(--td);">// ML-Enhanced XSS Vulnerability Scanner v2.0</div>
+      <div style="color:var(--td);">// Configure your target and press LAUNCH to begin</div>
+      <div style="color:var(--tm);margin-top:8px;" class="cursor-blink">&nbsp;</div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleOpt(toggleId, inputId) {
+  const t = document.getElementById(toggleId);
+  t.classList.toggle('on');
+  document.getElementById(inputId).value = t.classList.contains('on') ? 'true' : 'false';
+}
+function toggleAdvanced() {
+  const p = document.getElementById('advanced-panel');
+  const arrow = document.getElementById('adv-arrow');
+  const open = p.style.display !== 'none';
+  p.style.display = open ? 'none' : 'block';
+  arrow.style.transform = open ? '' : 'rotate(180deg)';
+}
+function clearTerminal() {
+  document.getElementById('terminal-output').innerHTML = '<div style="color:var(--td);">Terminal cleared. Ready for next scan.</div>';
+}
+</script>
+{% endblock %}

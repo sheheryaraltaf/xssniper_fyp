@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% set active = "admin" %}
+{% block title %}Admin Panel{% endblock %}
+{% block page_title %}Admin Panel{% endblock %}
+{% block page_title_copy %}Admin Panel{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div class="card-title" style="margin-bottom:2px;">User Management</div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--tm);">{{ users|length }} registered users</div>
+    </div>
+    <span class="badge badge-red">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      ADMIN ACCESS
+    </span>
+  </div>
+
+  <div style="overflow-x:auto;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>User</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr id="user-row-{{ u.id }}">
+          <td style="font-family:var(--font-mono);color:var(--tm);font-size:12px;">{{ u.id }}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--bg4),var(--bg3));border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-family:var(--font-hd);font-weight:700;font-size:13px;color:var(--g);flex-shrink:0;">
+                {{ u.username[0].upper() }}
+              </div>
+              <div>
+                <div style="font-weight:600;font-size:13px;">{{ u.username }}</div>
+                {% if u.username == 'admin' %}<div style="font-size:10px;font-family:var(--font-mono);color:var(--tm);">system account</div>{% endif %}
+              </div>
+            </div>
+          </td>
+          <td style="font-family:var(--font-mono);font-size:12px;color:var(--td);">{{ u.email or '—' }}</td>
+          <td>
+            <span class="badge {% if u.role == 'admin' %}badge-orange{% else %}badge-cyan{% endif %}">
+              {{ u.role.upper() }}
+            </span>
+          </td>
+          <td>
+            {% if u.username != 'admin' %}
+            <button class="btn btn-danger btn-sm" onclick="deleteUser({{ u.id }}, '{{ u.username }}')">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+              Delete
+            </button>
+            {% else %}
+            <span style="font-size:12px;color:var(--tm);font-family:var(--font-mono);">protected</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

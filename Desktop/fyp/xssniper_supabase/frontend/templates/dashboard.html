@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% set active = "dashboard" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_title_copy %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- ── Stat Cards ── -->
+<div class="stats-3col" class="stats-3col" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
+
+  <div class="stat-card green">
+    <div class="stat-icon-wrap green">🔍</div>
+    <div>
+      <div class="stat-value" id="counter-total">{{ stats.total }}</div>
+      <div class="stat-label">Total Scans</div>
+    </div>
+    <div style="margin-left:auto;">
+      <div class="progress-bar" style="width:80px;"><div class="progress-fill green" style="width:72%;"></div></div>
+    </div>
+  </div>
+
+  <div class="stat-card red">
+    <div class="stat-icon-wrap red">⚠️</div>
+    <div>
+      <div class="stat-value" id="counter-vulns">{{ stats.vulns }}</div>
+      <div class="stat-label">Vulnerabilities</div>
+    </div>
+    <div style="margin-left:auto;">
+      <div class="progress-bar" style="width:80px;"><div class="progress-fill red" style="width:{% if stats.total > 0 %}{{ [100, (stats.vulns / stats.total * 100)|int]|min }}{% else %}0{% endif %}%;"></div></div>
+    </div>
+  </div>
+
+  <div class="stat-card cyan">
+    <div class="stat-icon-wrap cyan">💎</div>
+    <div>
+      <div class="stat-value" id="counter-health">{{ stats.health }}</div>
+      <div class="stat-label">System Health %</div>
+    </div>
+    <div style="margin-left:auto;">
+      <div class="progress-bar" style="width:80px;"><div class="progress-fill cyan" style="width:{{ stats.health }}%;"></div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Main Grid ── -->
+<div class="dash-grid" class="dash-grid" style="display:grid;grid-template-columns:1fr 320px;gap:20px;">
+
+  <!-- Left column -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    <!-- Activity Chart -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px;">
+        <div class="card-title" style="margin-bottom:0;">Scan Activity</div>
+        <div style="display:flex;gap:16px;font-family:var(--font-mono);font-size:11px;color:var(--tm);">
+          <span style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--g);display:inline-block;"></span>Scans</span>
+          <span style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--r);display:inline-block;"></span>Vulnerabilities</span>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="activityChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px;">
+        <div class="card-title" style="margin-bottom:0;">Recent Scans</div>
+        <a href="/history" class="btn btn-ghost btn-sm">View All →</a>
+      </div>
+
+      {% if history %}
+        {% for scan in history %}
+        <div class="activity-item">
+          <div style="min-width:0;flex:1;">
+            <div class="activity-url" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              {{ scan.url[:60] }}{% if scan.url|length > 60 %}…{% endif %}
+            </div>
+            <div class="activity-meta">{{ scan.date }} · {{ scan.duration }}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+            {% if scan.vulnerabilities > 0 %}
+            <span class="badge badge-red">⚠ {{ scan.vulnerabilities }}</span>
+            {% else %}
+            <span class="badge badge-green">✓ Clean</span>
+            {% endif %}
+            <span class="badge {% if scan.status == 'Completed' %}badge-green{% else %}badge-red{% endif %}">
+              {{ scan.status }}
+            </span>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">◎</div>
+          <div class="empty-state-text">No scans yet — run your first scan!</div>
+          <a href="/scan" class="btn btn-primary">Launch Scanner</a>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Right column -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+
+    <!-- Quick Actions -->
+    <div class="card">
+      <div class="card-title">Quick Actions</div>
+      <a href="/scan" class="btn btn-primary btn-lg" style="width:100%;margin-bottom:10px;">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        New Scan
+      </a>
+      <a href="/history" class="btn btn-ghost btn-lg" style="width:100%;">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+        View History
+      </a>
+    </div>
+
+    <!-- Vuln Donut Chart -->
+    <div class="card">
+      <div class="card-title">Vulnerability Ratio</div>
+      <div style="position:relative;height:160px;">
+        <canvas id="vulnChart"></canvas>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;">
+        <div style="background:var(--bg1);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-family:var(--font-hd);font-size:18px;font-weight:700;color:var(--r);">{{ stats.vulns }}</div>
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--tm);margin-top:2px;">VULNERABLE</div>
+        </div>
+        <div style="background:var(--bg1);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-family:var(--font-hd);font-size:18px;font-weight:700;color:var(--g);">{{ stats.total - stats.vulns if stats.total >= stats.vulns else 0 }}</div>
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--tm);margin-top:2px;">CLEAN</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ML Engine Card -->
+    <div class="ml-card">
+      <div class="ml-card-title">🤖 ML ENGINE</div>
+      <div class="ml-card-desc" style="margin-bottom:14px;">XSS-Classifier v2.0 — Active</div>
+      <div style="font-size:12px;font-family:var(--font-mono);color:var(--td);line-height:2.2;">
+        <div style="display:flex;justify-content:space-between;"><span>Accuracy</span><span style="color:var(--g);font-weight:600;">94.2%</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>Payloads</span><span style="color:var(--t);">247 vectors</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>Training set</span><span style="color:var(--t);">15,420 samples</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>Method</span><span style="color:var(--c);">TF-IDF + n-grams</span></div>
+      </div>
+    </div>
+
+    <!-- System Info -->
+    <div class="card">
+      <div class="card-title">System Info</div>
+      <div style="font-size:12px;font-family:var(--font-mono);color:var(--td);line-height:2.4;">
+        <div style="display:flex;justify-content:space-between;"><span>Engine</span><span style="color:var(--t);">XSStrike 3.x</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>Backend</span><span style="color:var(--t);">FastAPI</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>Database</span><span style="color:var(--t);">SQLite 3</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>Logged in</span><span style="color:var(--g);">{{ user.username }}</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+Chart.defaults.color = '#7c8fa6';
+Chart.defaults.borderColor = '#1e2d42';
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size = 11;
+
+const actCtx = document.getElementById('activityChart').getContext('2d');
+new Chart(actCtx, {
+  type: 'line',
+  data: {
+    labels: ['7d ago','6d ago','5d ago','4d ago','3d ago','2d ago','Today'],
+    datasets: [
+      { label:'Scans', data:[2,4,3,6,5,8,{{ stats.total }}], borderColor:'#00ff88', backgroundColor:'rgba(0,255,136,0.06)', borderWidth:2, pointBackgroundColor:'#00ff88', pointBorderColor:'#020407', pointRadius:4, tension:0.4, fill:true },
+      { label:'Vulnerabilities', data:[1,2,1,3,2,4,{{ stats.vulns }}], borderColor:'#f43f5e', backgroundColor:'rgba(244,63,94,0.04)', borderWidth:2, pointBackgroundColor:'#f43f5e', pointBorderColor:'#020407', pointRadius:4, tension:0.4, fill:true }
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#0e1420',borderColor:'#1e2d42',borderWidth:1,titleColor:'#e2e8f0',bodyColor:'#7c8fa6',padding:10} }, scales:{ x:{grid:{color:'rgba(30,45,66,0.6)'},ticks:{color:'#3d5166'}}, y:{grid:{color:'rgba(30,45,66,0.6)'},ticks:{color:'#3d5166',stepSize:1},beginAtZero:true} } }
+});
+
+const vCtx = document.getElementById('vulnChart').getContext('2d');
+const vulns = {{ stats.vulns }};
+const clean = Math.max(0, {{ stats.total }} - vulns);
+new Chart(vCtx, {
+  type: 'doughnut',
+  data: { labels:['Vulnerable','Clean'], datasets:[{ data: vulns+clean>0?[vulns,clean]:[0,1], backgroundColor:['rgba(244,63,94,0.8)','rgba(0,255,136,0.6)'], borderColor:['#f43f5e','#00ff88'], borderWidth:1, hoverOffset:4 }] },
+  options: { responsive:true, maintainAspectRatio:false, cutout:'72%', plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#0e1420',borderColor:'#1e2d42',borderWidth:1,titleColor:'#e2e8f0',bodyColor:'#7c8fa6',padding:10} } }
+});
+</script>
+{% endblock %}
