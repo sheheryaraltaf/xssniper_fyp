@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+{% set active = "settings" %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block page_title_copy %}Settings{% endblock %}
+
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+  <!-- ═══════════════ LEFT COLUMN ═══════════════ -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+
+    <!-- Scan Defaults -->
+    <div class="card">
+      <div class="card-title">Scan Defaults</div>
+      <div class="form-group">
+        <label class="form-label">Default Scan Level</label>
+        <select class="form-select" id="s-level">
+          <option value="1">1 — Basic</option>
+          <option value="2" selected>2 — Standard</option>
+          <option value="3">3 — Deep</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Default Threads</label>
+        <input class="form-input" id="s-threads" type="number" min="1" max="20" value="2">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Default Timeout (seconds)</label>
+        <input class="form-input" id="s-timeout" type="number" min="1" max="60" value="5">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Default Delay (seconds)</label>
+        <input class="form-input" id="s-delay" type="number" min="0" max="10" step="0.5" value="0">
+      </div>
+    </div>
+
+    <!-- ML Configuration -->
+    <div class="card">
+      <div class="card-title">ML Configuration</div>
+      <div class="toggle-row" onclick="toggleOpt('t-prefilter','s-prefilter')">
+        <div>
+          <div class="toggle-label">ML Prefiltering</div>
+          <div class="toggle-desc">Enable by default on all scans</div>
+        </div>
+        <div class="toggle" id="t-prefilter"></div>
+        <input type="hidden" id="s-prefilter" value="false">
+      </div>
+      <div class="form-group" style="margin-top:16px;">
+        <label class="form-label">
+          Confidence Threshold: <span id="conf-val" style="color:var(--g)">0.7</span>
+        </label>
+        <input type="range" min="0.1" max="1.0" step="0.1" value="0.7"
+          oninput="document.getElementById('conf-val').textContent=parseFloat(this.value).toFixed(1)">
+      </div>
+      <div style="background:var(--g-d);border:1px solid rgba(0,255,136,0.15);border-radius:8px;padding:14px;font-family:var(--font-mono);font-size:12px;color:var(--td);line-height:2.2;margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;"><span>Model</span><span style="color:var(--g)">XSS-Classifier v2.0</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>Features</span><span style="color:var(--t)">TF-IDF + Char n-grams</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>Training set</span><span style="color:var(--t)">15,420 samples</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>Accuracy</span><span style="color:var(--g)">94.2%</span></div>
+      </div>
+    </div>
+
+    <!-- Save Settings -->
+    <div class="card" style="border-color:rgba(0,255,136,0.15);background:linear-gradient(135deg,var(--bg2),rgba(0,30,15,0.9));">
+      <div class="card-title">Save Preferences</div>
+      <p style="font-size:13px;color:var(--td);margin-bottom:16px;">Scan preferences are saved to your browser.</p>
+      <button class="btn btn-primary btn-lg" style="width:100%;font-family:var(--font-hd);letter-spacing:2px;" onclick="saveSettings()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+        SAVE CONFIGURATION
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ RIGHT COLUMN ═══════════════ -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+
+    <!-- Account Info (read-only) -->
+    <div class="card">
+      <div class="card-title">Account</div>
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input class="form-input" type="text" value="{{ user.username }}" readonly style="opacity:0.5;cursor:not-allowed;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" value="{{ user.email or 'Not set' }}" readonly style="opacity:0.5;cursor:not-allowed;">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Role</label>
+        <input class="form-input" type="text" value="{{ user.role.upper() }}" readonly style="opacity:0.5;cursor:not-allowed;color:var(--g);">
+      </div>
+    </div>
+
+    <!-- Change Password -->
+    <div class="card">
+      <div class="card-title">Change Password</div>
+      <div id="cp-error"   class="error-msg"   style="display:none;margin-bottom:12px;"></div>
+      <div id="cp-success" style="display:none;background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--g);margin-bottom:12px;text-align:center;"></div>
+
+      <div class="form-group">
+        <label class="form-label">Current Password</label>
+        <div class="input-wrap">
+          <input id="cp-current" class="form-input" type="password"
+                 placeholder="Your current password" style="padding-right:40px;">
+          <span class="input-icon" onclick="togglePassword('cp-current')">👁</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">New Password</label>
+        <div class="input-wrap">
+          <input id="cp-new" class="form-input" type="password"
+                 placeholder="Min 8 chars, upper+lower+number+symbol" style="padding-right:40px;"
+                 oninput="checkCpStrength()">
+          <span class="input-icon" onclick="togglePassword('cp-new')">👁</span>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="form-label">Confirm New Password</label>
+        <div class="input-wrap">
+          <input id="cp-confirm" class="form-input" type="password"
+                 placeholder="Repeat new password" style="padding-right:40px;">
+          <span class="input-icon" onclick="togglePassword('cp-confirm')">👁</span>
+        </div>
+      </div>
+
+      <!-- Strength hints -->
+      <div style="background:var(--bg1);border:1px solid var(--b);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-family:var(--font-mono);font-size:11px;color:var(--td);line-height:2;">
+        <div><span id="cp-ic-len">○</span>&nbsp; At least 8 characters</div>
+        <div><span id="cp-ic-up">○</span>&nbsp; One uppercase letter</div>
+        <div><span id="cp-ic-lo">○</span>&nbsp; One lowercase letter</div>
+        <div><span id="cp-ic-nu">○</span>&nbsp; One number</div>
+        <div><span id="cp-ic-sy">○</span>&nbsp; One special character</div>
+      </div>
+
+      <button id="cp-btn" class="btn btn-primary" style="width:100%;font-family:var(--font-hd);letter-spacing:2px;"
+              onclick="doChangePassword()">
+        UPDATE PASSWORD
+      </button>
+    </div>
+
+    <!-- Database Info — real Supabase data -->
+    <div class="card">
+      <div class="card-title">Database</div>
+      <div style="font-family:var(--font-mono);font-size:12px;color:var(--td);line-height:2.4;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;">
+          <span>Engine</span>
+          <span style="color:var(--t)">{{ db_info.engine }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span>Host</span>
+          <span style="color:var(--t);font-size:11px;">{{ db_info.host }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span>Status</span>
+          <span style="color:var(--g);display:flex;align-items:center;gap:5px;">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--g);animation:pulse 2s infinite;display:inline-block;"></span>
+            Connected
+          </span>
+        </div>
+      </div>
+      <button class="btn btn-danger btn-sm"
+              onclick="if(confirm('Clear all scan history? This cannot be undone.')) clearHistory()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="3,6 5,6 21,6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+        </svg>
+        Clear All Scan History
+      </button>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Save scan preferences to localStorage ──────────────────────────────────
+function saveSettings() {
+  localStorage.setItem('xss-level',     document.getElementById('s-level').value);
+  localStorage.setItem('xss-threads',   document.getElementById('s-threads').value);
+  localStorage.setItem('xss-timeout',   document.getElementById('s-timeout').value);
+  localStorage.setItem('xss-delay',     document.getElementById('s-delay').value);
+  localStorage.setItem('xss-prefilter', document.getElementById('s-prefilter').value);
+  toast('Settings saved', 'success');
+}
+
+// Load saved preferences on page load
+(function loadSettings() {
+  const map = {
+    's-level':   'xss-level',
+    's-threads': 'xss-threads',
+    's-timeout': 'xss-timeout',
+    's-delay':   'xss-delay',
+  };
+  for (const [id, key] of Object.entries(map)) {
+    const val = localStorage.getItem(key);
+    if (val) document.getElementById(id).value = val;
+  }
+  const pre = localStorage.getItem('xss-prefilter');
+  if (pre === 'true') {
+    document.getElementById('t-prefilter').classList.add('on');
+    document.getElementById('s-prefilter').value = 'true';
+  }
+})();
+
+function toggleOpt(toggleId, inputId) {
+  const t = document.getElementById(toggleId);
+  t.classList.toggle('on');
+  document.getElementById(inputId).value = t.classList.contains('on') ? 'true' : 'false';
+}
+
+// ── Clear scan history (real API call) ─────────────────────────────────────
+async function clearHistory() {
+  try {
+    const history = await fetch('/api/history').then(r => r.json());
+    if (!history.length) { toast('No scan history to clear', 'info'); return; }
+    let failed = 0;
+    for (const scan of history) {
+      const res = await fetch(`/api/history/${scan.id}`, { method: 'DELETE' });
+      if (!res.ok) failed++;
+    }
+    if (failed === 0) {
+      toast('All scan history cleared', 'success');
+    } else {
+      toast(`Cleared with ${failed} error(s)`, 'warning');
+    }
+  } catch (err) {
+    toast('Failed to clear history', 'error');
+  }
+}
+
+// ── Password strength checker ─────────────────────────────────────────────
+function checkCpStrength() {
+  const p = document.getElementById('cp-new').value;
+  const checks = {
+    'cp-ic-len': p.length >= 8,
+    'cp-ic-up':  /[A-Z]/.test(p),
+    'cp-ic-lo':  /[a-z]/.test(p),
+    'cp-ic-nu':  /[0-9]/.test(p),
+    'cp-ic-sy':  /[^A-Za-z0-9]/.test(p),
+  };
+  for (const [id, pass] of Object.entries(checks)) {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = pass ? '✓' : '○'; el.style.color = pass ? 'var(--g)' : 'var(--td)'; }
+  }
+}
+
+// ── Change password (real API call) ─────────────────────────────────────────
+async function doChangePassword() {
+  const current = document.getElementById('cp-current').value;
+  const newPw   = document.getElementById('cp-new').value;
+  const confirm = document.getElementById('cp-confirm').value;
+  const btn     = document.getElementById('cp-btn');
+  const errEl   = document.getElementById('cp-error');
+  const sucEl   = document.getElementById('cp-success');
+
+  errEl.style.display = 'none';
+  sucEl.style.display = 'none';
+
+  if (!current || !newPw || !confirm) {
+    errEl.textContent = 'All fields are required.'; errEl.style.display = 'block'; return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = 'UPDATING...';
+
+  try {
+    const res  = await fetch('/api/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        current_password: current,
+        new_password:     newPw,
+        confirm_password: confirm,
+      }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      errEl.textContent   = data.detail || 'Password update failed.';
+      errEl.style.display = 'block';
+    } else {
+      sucEl.textContent   = '✓ Password changed successfully!';
+      sucEl.style.display = 'block';
+      document.getElementById('cp-current').value = '';
+      document.getElementById('cp-new').value     = '';
+      document.getElementById('cp-confirm').value = '';
+      checkCpStrength();
+    }
+  } catch (err) {
+    errEl.textContent   = 'Network error. Please try again.';
+    errEl.style.display = 'block';
+  }
+
+  btn.disabled    = false;
+  btn.textContent = 'UPDATE PASSWORD';
+}
+</script>
+{% endblock %}

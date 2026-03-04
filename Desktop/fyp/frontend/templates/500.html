@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XSSniper — 500 Server Error</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<style>
+  body { margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg1, #020408); font-family: var(--font-mono, monospace); }
+  .err-wrap { text-align: center; padding: 40px 20px; }
+  .err-code { font-size: clamp(80px, 20vw, 160px); font-weight: 900; color: var(--r, #ff3b5c); line-height: 1; margin-bottom: 8px; letter-spacing: -4px; font-family: var(--font-hd, monospace); }
+  .err-title { font-size: 20px; color: var(--t, #c8d8e8); margin-bottom: 10px; letter-spacing: 3px; text-transform: uppercase; }
+  .err-desc { font-size: 14px; color: var(--tm, #5a7a8a); margin-bottom: 32px; max-width: 380px; line-height: 1.7; }
+  .err-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .err-tag { font-size: 11px; color: var(--r, #ff3b5c); margin-bottom: 24px; letter-spacing: 2px; }
+</style>
+</head>
+<body>
+<div class="err-wrap">
+  <div class="err-code">500</div>
+  <div class="err-tag">// INTERNAL_SERVER_ERROR</div>
+  <div class="err-title">System Malfunction</div>
+  <div class="err-desc">Something went wrong on our end. The scanner encountered an unexpected error. Please try again in a moment.</div>
+  <div class="err-actions">
+    <a href="/" class="btn btn-primary">← Back to Dashboard</a>
+    <button onclick="location.reload()" class="btn btn-ghost">Retry</button>
+  </div>
+</div>
+</body>
+</html>

@@ -10,7 +10,7 @@
     <div>
       <div class="card-title" style="margin-bottom:2px;">All Scans</div>
       <div style="font-family:var(--font-mono);font-size:11px;color:var(--tm);">
-        {% if history %}{{ history|length }} records{% else %}No records{% endif %}
+        {% if history %}{{ total }} records{% else %}No records{% endif %}
       </div>
     </div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
@@ -75,6 +75,32 @@
     <div class="empty-state-icon">◈</div>
     <div class="empty-state-text">No scan history yet</div>
     <a href="/scan" class="btn btn-primary">Run First Scan</a>
+  </div>
+  {% endif %}
+
+  {% if total_pages > 1 %}
+  <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:24px;flex-wrap:wrap;">
+    {% if page > 1 %}
+    <a href="/history?page={{ page - 1 }}" class="btn btn-ghost btn-sm" aria-label="Previous page">← Prev</a>
+    {% else %}
+    <button class="btn btn-ghost btn-sm" disabled style="opacity:0.3;">← Prev</button>
+    {% endif %}
+
+    {% for p in range(1, total_pages + 1) %}
+      {% if p == page %}
+      <span class="btn btn-primary btn-sm" style="min-width:36px;text-align:center;">{{ p }}</span>
+      {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+      <a href="/history?page={{ p }}" class="btn btn-ghost btn-sm" style="min-width:36px;text-align:center;">{{ p }}</a>
+      {% elif p == page - 3 or p == page + 3 %}
+      <span style="color:var(--tm);padding:0 4px;">…</span>
+      {% endif %}
+    {% endfor %}
+
+    {% if page < total_pages %}
+    <a href="/history?page={{ page + 1 }}" class="btn btn-ghost btn-sm" aria-label="Next page">Next →</a>
+    {% else %}
+    <button class="btn btn-ghost btn-sm" disabled style="opacity:0.3;">Next →</button>
+    {% endif %}
   </div>
   {% endif %}
 </div>

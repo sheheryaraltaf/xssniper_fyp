@@ -391,3 +391,63 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 
 /* Social buttons stack */
 .social-btns { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+
+/* ═══════════════════════════════════
+   RESPONSIVE — SETTINGS 2-COL GRID
+═══════════════════════════════════ */
+@media(max-width:900px){
+  [style*="grid-template-columns:1fr 1fr"]{
+    grid-template-columns:1fr!important;
+  }
+}
+
+/* ═══════════════════════════════════
+   SKELETON LOADING SHIMMER
+═══════════════════════════════════ */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg2, #0a1520) 25%, rgba(255,255,255,0.04) 50%, var(--bg2, #0a1520) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton-stat { height: 60px; margin-bottom: 8px; }
+.skeleton-row  { height: 40px; margin-bottom: 10px; }
+.skeleton-text { height: 14px; width: 60%; margin-bottom: 6px; }
+
+/* ═══════════════════════════════════
+   PAGINATION
+═══════════════════════════════════ */
+.btn[disabled] { cursor: not-allowed; pointer-events: none; }
+
+/* ═══════════════════════════════════
+   FOCUS / ACCESSIBILITY
+═══════════════════════════════════ */
+:focus-visible {
+  outline: 2px solid var(--g, #00ff88);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+a:focus-visible, button:focus-visible { outline: 2px solid var(--g, #00ff88); }
+
+/* ═══════════════════════════════════
+   REMEMBER ME CHECKBOX
+═══════════════════════════════════ */
+.remember-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--td, #8a9db0);
+  cursor: pointer;
+  user-select: none;
+}
+.remember-row input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--g, #00ff88);
+  cursor: pointer;
+}
